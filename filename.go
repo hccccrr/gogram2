@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -10,36 +9,41 @@ import (
 )
 
 var (
-	[span_0](start_span)appID   int32  = 25742938                           // Tuhada API_ID[span_0](end_span)
-	[span_1](start_span)appHash string = "b35b715fe8dc0a58e8048988286fc5b6" // Tuhada API_HASH[span_1](end_span)
-	[span_2](start_span)token   string = "7623679464:AAGqdslPgtOzrAtycf6iuuDGPAJZCw4vJR0" // Tuhada Bot Token[span_2](end_span)
+	appID   int32  = 25742938                           
+	appHash string = "b35b715fe8dc0a58e8048988286fc5b6" 
+	token   string = "7623679464:AAGqdslPgtOzrAtycf6iuuDGPAJZCw4vJR0" 
 )
 
 func main() {
+	// Gogram client initialization (Updated Syntax)
 	client, err := telegram.NewClient(telegram.ClientConfig{
 		AppID:    appID,
 		AppHash:  appHash,
 		LogLevel: telegram.LogInfo,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to create client:", err)
 	}
 
-	client.LoginBot(token)
+	// Login as Bot
+	err = client.LoginBot(token)
+	if err != nil {
+		log.Fatal("Bot login failed:", err)
+	}
 
-	fmt.Println(">> Bot is running... Send /generate to your bot.")
+	fmt.Println(">> Bot is online! Send /start to generate session.")
 
 	client.OnMessage(func(ctx *telegram.NewMessage) error {
-		if ctx.Text() == "/start" || ctx.Text() == "/generate" {
-			ctx.Reply("Gogram String Session generate karan layi apna Phone Number bhejo (with country code, e.g., +919876543210):")
+		if ctx.Text() == "/start" {
+			ctx.Reply("Gogram String Session generate karan layi apna Phone Number bhejo (e.g., +919876543210):")
 			return nil
 		}
 
-		// Phone number handle karna
+		// Agar message + naal start hunda hai (Phone Number)
 		if strings.HasPrefix(ctx.Text(), "+") {
 			phone := ctx.Text()
 			
-			// Nawa user client create karna login layi
+			// User client setup for session generation
 			userClient, _ := telegram.NewClient(telegram.ClientConfig{
 				AppID:   appID,
 				AppHash: appHash,
@@ -51,20 +55,21 @@ func main() {
 				return nil
 			}
 
-			ctx.Reply("OTP mil gaya hai? Kripya OTP is format vich bhejo: `code:12345` (code de baad apna OTP likho)")
+			ctx.Reply("OTP mil gaya? Kripya OTP bhej dyo (Format -> otp:12345):")
 			
-			// Simple handler for OTP (Note: Real bot vich state management chahidi hundi hai)
+			// OTP Handler
 			client.OnMessage(func(otpCtx *telegram.NewMessage) error {
-				if strings.HasPrefix(otpCtx.Text(), "code:") {
-					code := strings.TrimPrefix(otpCtx.Text(), "code:")
+				if strings.HasPrefix(otpCtx.Text(), "otp:") {
+					code := strings.TrimPrefix(otpCtx.Text(), "otp:")
 					_, err := userClient.AuthSignIn(phone, sentCode.PhoneCodeHash, code)
 					if err != nil {
 						otpCtx.Reply("Invalid OTP: " + err.Error())
 						return nil
 					}
 
+					// Export session for your bot
 					session, _ := userClient.ExportSession()
-					otpCtx.Reply("✅ Tuhadi Gogram String Session:\n\n`" + session + "`\n\nIsnu copy karke safe rakho.")
+					otpCtx.Reply("✅ Tuhadi Gogram Session String:\n\n`" + session + "`")
 				}
 				return nil
 			})
