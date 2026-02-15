@@ -22,6 +22,7 @@ func main() {
 	phone, _ := reader.ReadString('\n')
 	phone = strings.TrimSpace(phone)
 
+	// USER CLIENT
 	user, err := tg.NewClient(tg.ClientConfig{
 		AppID:   appID,
 		AppHash: appHash,
@@ -42,21 +43,15 @@ func main() {
 		&tg.CodeSettings{},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("SendCode failed:", err)
 	}
 
 	fmt.Print("🔑 Enter OTP: ")
 	otp, _ := reader.ReadString('\n')
 	otp = strings.TrimSpace(otp)
 
-	// ✅ SIGN IN (CORRECT)
-	_, err = user.AuthSignIn(
-		phone,
-		sentCode.CodeHash,
-		otp,
-		nil, // ✅ EmailVerification NOT REQUIRED
-	)
-	if err != nil {
+	// ✅ SIGN IN — THIS IS THE KEY PART
+	if err := sentCode.SignIn(user, otp); err != nil {
 		log.Fatal("Login failed:", err)
 	}
 
